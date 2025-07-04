@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Deslizante - Crónicas del Istmo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: linear-gradient(145deg, #4A2C17 0%, #3D1E0F 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                inset 0 2px 10px rgba(139, 69, 19, 0.2),
+                0 0 0 3px #8B4513,
+                0 0 0 6px #654321;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(139, 69, 19, 0.03) 2px,
+                rgba(139, 69, 19, 0.03) 4px
+            );
+            animation: woodGrain 20s linear infinite;
+        }
+        
+        @keyframes woodGrain {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .title {
+            text-align: center;
+            color: #D2691E;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #CD853F;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .puzzle-board {
+            width: 100%;
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #2F1B14 0%, #1A0F0A 100%);
+            border-radius: 15px;
+            padding: 8px;
+            display: grid;
+            /* CAMBIO A 3x3 */
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 3px;
+            box-shadow: 
+                inset 0 4px 8px rgba(0, 0, 0, 0.6),
+                0 2px 4px rgba(139, 69, 19, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .puzzle-piece {
+            background-repeat: no-repeat;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(139, 69, 19, 0.2);
+            border: 2px solid #8B4513;
+            position: relative;
+            overflow: hidden;
+            transition: grid-column 0.3s ease, grid-row 0.3s ease;
+        }
+        
+        .puzzle-piece::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(139, 69, 19, 0.1) 0%, 
+                transparent 50%, 
+                rgba(0, 0, 0, 0.1) 100%);
+            border-radius: 6px;
+        }
+        
+        .puzzle-piece:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.5),
+                inset 0 1px 2px rgba(139, 69, 19, 0.3);
+            z-index: 10;
+        }
+        
+        .puzzle-piece:active {
+            transform: translateY(0) scale(1);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(139, 69, 19, 0.2);
+        }
+        
+        .empty-slot {
+            background: linear-gradient(145deg, #1A0F0A 0%, #0D0705 100%);
+            border: 2px dashed #654321;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(145deg, #D2691E 0%, #B8601A 100%);
+            color: white;
+            border: 2px solid #8B4513;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(145deg, #E6751F 0%, #CC6B1B 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(145deg, #8B4513 0%, #654321 100%);
+            color: #D2691E;
+            border: 2px solid #654321;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(145deg, #A0522D 0%, #704A28 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .victory-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .victory-content {
+            background: linear-gradient(145deg, #4A2C17 0%, #3D1E0F 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.6),
+                inset 0 2px 10px rgba(139, 69, 19, 0.2),
+                0 0 0 3px #8B4513;
+            transform: scale(0.9);
+            animation: scaleUp 0.5s ease forwards;
+        }
+
+        @keyframes scaleUp {
+             from { transform: scale(0.8); opacity: 0.5; }
+             to { transform: scale(1); opacity: 1; }
+        }
+        
+        .victory-title {
+            color: #D2691E;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .victory-text {
+            color: #CD853F;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            display: block;
+        }
+        
+        .moves-counter {
+            text-align: center;
+            color: #CD853F;
+            font-size: 1.1rem;
+            margin-top: 15px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .decorative-corner {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #8B4513;
+        }
+        
+        .decorative-corner.top-left { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+        .decorative-corner.top-right { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+        .decorative-corner.bottom-left { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+        .decorative-corner.bottom-right { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+        
+        @media (max-width: 768px) {
+            .container { padding: 20px; margin: 10px; }
+            .title { font-size: 1.5rem; }
+            .subtitle { font-size: 0.8rem; }
+            .btn { padding: 8px 16px; font-size: 0.9rem; }
+            .victory-content { padding: 30px 20px; }
+            .victory-title { font-size: 1.7rem; }
+            .qr-code { width: 150px; height: 150px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="decorative-corner top-left"></div>
+        <div class="decorative-corner top-right"></div>
+        <div class="decorative-corner bottom-left"></div>
+        <div class="decorative-corner bottom-right"></div>
+        
+        <h1 class="title">🏛️ CRÓNICAS DEL ISTMO 🏛️</h1>
+        <p class="subtitle">Resuelve el enigma para descubrir el tesoro oculto</p>
+        
+        <div class="puzzle-board" id="puzzleBoard">
+            </div>
+        
+        <div class="moves-counter">
+            Movimientos: <span id="movesCount">0</span>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" id="shuffleButton">🎲 Mezclar</button>
+            <button class="btn btn-secondary" id="resetButton">🔄 Reiniciar</button>
+        </div>
+    </div>
+    
+    <div class="victory-modal" id="victoryModal">
+        <div class="victory-content">
+            <h2 class="victory-title">🎉 ¡ENIGMA RESUELTO! 🎉</h2>
+            <p class="victory-text">
+                ¡Felicitaciones, aventurero! Has demostrado tu destreza y astucia. 
+                Como recompensa, aquí tienes tu tesoro digital:
+            </p>
+            <div class="qr-container">
+                <img src="imgs/Qrpuzzle.png" alt="Código QR de Recompensa" class="qr-code">
+                <button class="btn btn-primary" style="margin-top: 20px;" onclick="document.getElementById('victoryModal').style.display = 'none'">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const puzzleBoard = document.getElementById('puzzleBoard');
+    const movesCountSpan = document.getElementById('movesCount');
+    const victoryModal = document.getElementById('victoryModal');
+    const shuffleButton = document.getElementById('shuffleButton');
+    const resetButton = document.getElementById('resetButton');
+
+    // ✨ ¡AQUÍ! Reemplaza 'imgs/imgpuzzle.png' con la ruta correcta a tu imagen.
+    const imgSrc = 'imgs/imgpuzzle.png'; 
+    
+    // -- CAMBIO A 3x3 --
+    const COLS = 3;
+    const ROWS = 3;
+    // --------------------
+
+    const PIECE_COUNT = COLS * ROWS;
+
+    let pieces = [];
+    let emptySlot = { row: ROWS - 1, col: COLS - 1 };
+    let moves = 0;
+    let isShuffling = false;
+
+    function init() {
+        pieces = [];
+        let id = 0;
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                if (id < PIECE_COUNT - 1) { // 8 piezas, 1 hueco
+                    pieces.push({
+                        id: id,
+                        solvedRow: i,
+                        solvedCol: j,
+                        currentRow: i,
+                        currentCol: j,
+                        element: createPieceElement(id, i, j)
+                    });
+                }
+                id++;
+            }
+        }
+        emptySlot = { row: ROWS - 1, col: COLS - 1 };
+        resetMoves();
+        renderBoard();
+        shuffleButton.onclick = shufflePuzzle;
+        resetButton.onclick = resetPuzzle;
+        victoryModal.onclick = () => victoryModal.style.display = 'none';
+    }
+
+    function createPieceElement(id, row, col) {
+        const piece = document.createElement('div');
+        piece.className = 'puzzle-piece';
+        piece.style.backgroundImage = `url('${imgSrc}')`;
+        
+        const bgSizeX = COLS * 100 + '%';
+        const bgSizeY = ROWS * 100 + '%';
+        piece.style.backgroundSize = `${bgSizeX} ${bgSizeY}`;
+        
+        const xPos = (col * 100 / (COLS - 1)) + '%';
+        const yPos = (row * 100 / (ROWS - 1)) + '%';
+        piece.style.backgroundPosition = `${xPos} ${yPos}`;
+        
+        piece.onclick = () => movePiece(id);
+        return piece;
+    }
+
+    function renderBoard() {
+        puzzleBoard.innerHTML = '';
+        const grid = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
+
+        pieces.forEach(p => {
+            grid[p.currentRow][p.currentCol] = p.element;
+        });
+
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                const element = grid[i][j] || createEmptySlotElement();
+                element.style.gridRow = i + 1;
+                element.style.gridColumn = j + 1;
+                puzzleBoard.appendChild(element);
+            }
+        }
+    }
+
+    function createEmptySlotElement() {
+        const empty = document.createElement('div');
+        empty.className = 'empty-slot';
+        return empty;
+    }
+
+    function movePiece(id) {
+        if(isShuffling) return;
+        const piece = pieces.find(p => p.id === id);
+        if (!piece) return;
+
+        const { currentRow, currentCol } = piece;
+        const { row: emptyRow, col: emptyCol } = emptySlot;
+
+        if ((Math.abs(currentRow - emptyRow) === 1 && currentCol === emptyCol) ||
+            (Math.abs(currentCol - emptyCol) === 1 && currentRow === emptyRow)) {
+            
+            piece.currentRow = emptyRow;
+            piece.currentCol = emptyCol;
+            emptySlot.row = currentRow;
+            emptySlot.col = currentCol;
+
+            incrementMoves();
+            renderBoard();
+
+            setTimeout(checkWin, 300);
+        }
+    }
+    
+    async function shufflePuzzle() {
+        if(isShuffling) return;
+        isShuffling = true;
+        resetMoves();
+
+        let shuffleMoves = 100; // Reducido para un puzzle más pequeño
+        for(let i = 0; i < shuffleMoves; i++) {
+            const neighbors = [];
+            const { row, col } = emptySlot;
+            if (row > 0) neighbors.push({ r: row - 1, c: col });
+            if (row < ROWS - 1) neighbors.push({ r: row + 1, c: col });
+            if (col > 0) neighbors.push({ r: row, c: col - 1 });
+            if (col < COLS - 1) neighbors.push({ r: row, c: col + 1 });
+            
+            const randomNeighbor = neighbors[Math.floor(Math.random() * neighbors.length)];
+            const pieceToMove = pieces.find(p => p.currentRow === randomNeighbor.r && p.currentCol === randomNeighbor.c);
+
+            if (pieceToMove) {
+                const tempRow = pieceToMove.currentRow;
+                const tempCol = pieceToMove.currentCol;
+                pieceToMove.currentRow = emptySlot.row;
+                pieceToMove.currentCol = emptySlot.col;
+                emptySlot.row = tempRow;
+                emptySlot.col = tempCol;
+            }
+            if(i % 10 === 0) {
+              renderBoard();
+              await new Promise(resolve => setTimeout(resolve, 5));
+            }
+        }
+        renderBoard();
+        isShuffling = false;
+    }
+
+    function resetPuzzle() {
+        init();
+    }
+    
+    function checkWin() {
+        const isSolved = pieces.every(p => p.currentRow === p.solvedRow && p.currentCol === p.solvedCol);
+        if (isSolved) {
+            const lastPiece = createPieceElement(PIECE_COUNT - 1, ROWS - 1, COLS - 1);
+            lastPiece.style.gridRow = emptySlot.row + 1;
+            lastPiece.style.gridColumn = emptySlot.col + 1;
+            puzzleBoard.appendChild(lastPiece);
+
+            victoryModal.style.display = 'flex';
+        }
+    }
+    
+    function incrementMoves() {
+        moves++;
+        movesCountSpan.textContent = moves;
+    }
+
+    function resetMoves() {
+        moves = 0;
+        movesCountSpan.textContent = moves;
+    }
+
+    init();
+});
+</script>
+
+</body>
+</html>
